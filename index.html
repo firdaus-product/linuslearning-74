@@ -1,712 +1,900 @@
 <!DOCTYPE html>
 <html lang="ms-MY">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kemahiran Pemulihan: Gabungan Operasi (x/÷)</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kemahiran Pemulihan: Gabungan Operasi (x/÷)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <style>
-    /* --- UI STYLE (TEMA HIJAU KONSISTEN) --- */
-    body { 
-        font-family: 'Fredoka', sans-serif; 
-        background-color: #f0fdf4; 
-        background-image: radial-gradient(#86efac 2px, transparent 2px); 
-        background-size: 30px 30px; 
-    }
-    
-    /* Card Container */
-    .game-card { 
-        background: white; 
-        border: 4px solid #475569; 
-        box-shadow: 8px 8px 0px #00000020; 
-        border-radius: 1.5rem; 
-        min-height: 550px; 
-        position: relative;
-    }
-    
-    /* Buttons 3D */
-    .btn-3d { 
-        transition: all 0.1s; 
-        border-bottom-width: 6px; 
-        border-color: rgba(0,0,0,0.2); 
-        transform: translateY(0); 
-        cursor: pointer; 
-        display: inline-block; 
-    }
-    .btn-3d:active:not(:disabled) { 
-        transform: translateY(4px); 
-        border-bottom-width: 2px; 
-        box-shadow: none; 
-    }
-    .btn-3d:disabled { opacity: 0.6; cursor: not-allowed; border-bottom-width: 6px; filter: grayscale(100%); }
+    <style>
+        /* --- UI STYLE (TEMA HIJAU KONSISTEN) --- */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#86efac 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
 
-    /* Animations */
-    .shake { animation: shake 0.4s ease-in-out; }
-    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-    
-    .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        /* Card Container */
+        .game-card {
+            background: white;
+            border: 4px solid #475569;
+            box-shadow: 8px 8px 0px #00000020;
+            border-radius: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
 
-    .pulse-bounce { animation: pulse-bounce 0.5s ease-out 1; }
-    @keyframes pulse-bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+        /* Buttons 3D */
+        .btn-3d {
+            transition: all 0.1s;
+            border-bottom-width: 6px;
+            border-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+            cursor: pointer;
+            display: inline-block;
+        }
 
-    .rotate-once { animation: rotate 0.5s ease-out; }
-    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+            box-shadow: none;
+        }
 
-    .fade-in { animation: fade-in 0.5s ease-out 1; }
-    @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-3d:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            border-bottom-width: 6px;
+            filter: grayscale(100%);
+        }
 
-    /* --- STYLES KHUSUS AKTIVITI --- */
-    
-    /* Display Box Nombor */
-    .num-display {
-        min-width: 80px; padding: 0.5rem 1rem; 
-        border: 3px solid #94a3b8; border-radius: 1rem; 
-        font-weight: 700; font-size: 1.8rem; 
-        background-color: #f8fafc; color: #334155;
-        display: inline-flex; align-items: center; justify-content: center;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
-    }
+        /* Animations */
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
 
-    /* Aktiviti 2: Mesin Aliran */
-    #a2-machine-display {
-        background-color: #334155; color: #f1f5f9;
-        border: 6px solid #94a3b8; border-radius: 1.5rem;
-        padding: 1.5rem 2.5rem; font-size: 3rem; font-weight: 800;
-        display: inline-flex; align-items: center; justify-content: center;
-        min-width: 200px; min-height: 140px;
-        position: relative; overflow: hidden; margin: 2rem 0;
-        box-shadow: 6px 6px 0 rgba(0,0,0,0.2);
-    }
-    #a2-machine-display::before {
-        content: '⚙️'; position: absolute; top: -10px; left: -10px;
-        font-size: 4rem; opacity: 0.1; transform: rotate(15deg);
-    }
+        @keyframes shake {
 
-    /* Aktiviti 3: Ladang Kumpulan */
-    .basket {
-        border: 4px solid #92400e; border-radius: 1rem;
-        width: 90px; height: 90px; display: flex;
-        flex-wrap: wrap; align-content: center;
-        justify-content: center; padding: 4px;
-        background-color: #fcd34d; position: relative; overflow: hidden;
-        box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
-        margin: 5px;
-    }
-    .apple { font-size: 1.5rem; line-height: 1; margin: 2px; animation: popIn 0.3s ease-out; }
-    
-    .group-box {
-        border: 3px dashed #94a3b8; border-radius: 1rem;
-        padding: 0.5rem; min-width: 120px; min-height: 100px;
-        background-color: #f1f5f9; display: flex; flex-wrap: wrap;
-        align-content: center; justify-content: center; margin: 5px;
-    }
+            0%,
+            100% {
+                transform: translateX(0);
+            }
 
-    /* Aktiviti 4: Builder Slots */
-    .eq-builder-slot {
-        width: 70px; height: 70px;
-        border: 3px dashed #cbd5e1; border-radius: 1rem;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.8rem; font-weight: 800; color: #475569;
-        background-color: #f8fafc;
-    }
-    .eq-btn {
-        background: white; border: 2px solid #cbd5e1; border-bottom-width: 4px;
-        border-radius: 0.8rem; padding: 0.5rem 1rem; font-size: 1.2rem; font-weight: bold;
-        color: #475569; transition: all 0.1s;
-    }
-    .eq-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+            25% {
+                transform: translateX(-8px);
+            }
 
-    /* Aktiviti 5: Resipi */
-    .recipe-step {
-        background-color: white; border: 2px solid #e2e8f0;
-        border-radius: 1rem; padding: 1rem; margin-bottom: 0.5rem;
-        text-align: left; font-weight: 600; color: #64748b;
-    }
-    .recipe-step.active { border-color: #f97316; background-color: #fff7ed; color: #c2410c; border-width: 3px; }
-    .recipe-step.done { border-color: #22c55e; background-color: #dcfce7; color: #15803d; opacity: 0.7; }
-    
-    .bowl-display {
-        background: radial-gradient(circle at 30% 30%, #ffffff, #f1f5f9);
-        border: 6px solid #cbd5e1; border-radius: 50%;
-        width: 160px; height: 160px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 3rem; font-weight: 800; color: #475569;
-        box-shadow: inset 10px 10px 20px rgba(0,0,0,0.05), 0 10px 20px rgba(0,0,0,0.1);
-    }
+            75% {
+                transform: translateX(8px);
+            }
+        }
 
-  </style>
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .pulse-bounce {
+            animation: pulse-bounce 0.5s ease-out 1;
+        }
+
+        @keyframes pulse-bounce {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .rotate-once {
+            animation: rotate 0.5s ease-out;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .fade-in {
+            animation: fade-in 0.5s ease-out 1;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* --- STYLES KHUSUS AKTIVITI --- */
+
+        /* Display Box Nombor */
+        .num-display {
+            min-width: 80px;
+            padding: 0.5rem 1rem;
+            border: 3px solid #94a3b8;
+            border-radius: 1rem;
+            font-weight: 700;
+            font-size: 1.8rem;
+            background-color: #f8fafc;
+            color: #334155;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        /* Aktiviti 2: Mesin Aliran */
+        #a2-machine-display {
+            background-color: #334155;
+            color: #f1f5f9;
+            border: 6px solid #94a3b8;
+            border-radius: 1.5rem;
+            padding: 1.5rem 2.5rem;
+            font-size: 3rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
+            min-height: 140px;
+            position: relative;
+            overflow: hidden;
+            margin: 2rem 0;
+            box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        #a2-machine-display::before {
+            content: '⚙️';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            font-size: 4rem;
+            opacity: 0.1;
+            transform: rotate(15deg);
+        }
+
+        /* Aktiviti 3: Ladang Kumpulan */
+        .basket {
+            border: 4px solid #92400e;
+            border-radius: 1rem;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            padding: 4px;
+            background-color: #fcd34d;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+            margin: 5px;
+        }
+
+        .apple {
+            font-size: 1.5rem;
+            line-height: 1;
+            margin: 2px;
+            animation: popIn 0.3s ease-out;
+        }
+
+        .group-box {
+            border: 3px dashed #94a3b8;
+            border-radius: 1rem;
+            padding: 0.5rem;
+            min-width: 120px;
+            min-height: 100px;
+            background-color: #f1f5f9;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            margin: 5px;
+        }
+
+        /* Aktiviti 4: Builder Slots */
+        .eq-builder-slot {
+            width: 70px;
+            height: 70px;
+            border: 3px dashed #cbd5e1;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #475569;
+            background-color: #f8fafc;
+        }
+
+        .eq-btn {
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-bottom-width: 4px;
+            border-radius: 0.8rem;
+            padding: 0.5rem 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #475569;
+            transition: all 0.1s;
+        }
+
+        .eq-btn:active {
+            transform: translateY(2px);
+            border-bottom-width: 2px;
+        }
+
+        /* Aktiviti 5: Resipi */
+        .recipe-step {
+            background-color: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .recipe-step.active {
+            border-color: #f97316;
+            background-color: #fff7ed;
+            color: #c2410c;
+            border-width: 3px;
+        }
+
+        .recipe-step.done {
+            border-color: #22c55e;
+            background-color: #dcfce7;
+            color: #15803d;
+            opacity: 0.7;
+        }
+
+        .bowl-display {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f1f5f9);
+            border: 6px solid #cbd5e1;
+            border-radius: 50%;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #475569;
+            box-shadow: inset 10px 10px 20px rgba(0, 0, 0, 0.05), 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
-<body class="min-h-screen text-slate-800 pb-10">
+</head>
 
-  <div class="fixed top-4 left-0 right-0 z-50 px-4 pointer-events-none">
-    <div class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-6 py-3 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl animate-bounce">✖️➗</span>
-        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Gabungan: Darab & Bahagi</span>
-      </div>
-      <button id="speak-btn" onclick="speakInfo()" class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
+<body class="h-screen w-screen overflow-hidden text-slate-800 flex flex-col overscroll-none">
+
+    <div class="fixed top-2 left-0 right-0 z-50 px-4 pointer-events-none">
+        <div
+            class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-4 py-1.5 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl animate-bounce">✖️➗</span>
+                <span id="info-text" class="text-base font-bold text-green-900 leading-none mt-0.5">Gabungan: Darab &
+                    Bahagi</span>
+            </div>
+            <button id="speak-btn" onclick="speakInfo()"
+                class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-1 transition-colors shadow-sm text-sm">🔊</button>
+        </div>
     </div>
-  </div>
-  <div class="h-24"></div>
+    <div class="h-16 flex-none"></div>
 
-  <div class="max-w-5xl mx-auto p-4">
-    
-    <div class="game-card p-6 mb-8 flex items-center justify-center">
-        <div id="activity-content" class="w-full relative z-10">
-            <div class="py-10 text-center">
-                <div class="text-8xl mb-6 animate-pulse">🧮</div>
-                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Operasi Bercampur</h2>
-                <p class="text-2xl text-slate-500 mb-8 font-semibold">Darab dan Bahagi Serentak</p>
-                <div class="text-4xl animate-bounce">👇</div>
+    <div class="max-w-6xl mx-auto p-2 w-full flex-1 flex flex-col overflow-hidden min-h-0">
+
+        <div class="game-card p-4 mb-2 flex items-center justify-center relative w-full">
+            <div id="activity-content" class="w-full h-full relative z-10 flex flex-col">
+                <div class="py-4 text-center">
+                    <div class="text-6xl mb-2 animate-pulse">🧮</div>
+                    <h2 class="text-3xl font-bold text-emerald-600 mb-2">Operasi Bercampur</h2>
+                    <p class="text-lg text-slate-500 mb-4 font-semibold">Darab dan Bahagi Serentak</p>
+                    <div class="text-2xl animate-bounce">👇</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-2 border-2 border-white flex-none">
+            <h3 class="text-sm font-bold text-slate-700 mb-2 text-center uppercase tracking-wider">🎮 Pilih Aktiviti
+            </h3>
+
+            <div class="flex flex-wrap justify-center gap-2 mb-2">
+                <button onclick="loadActivity(1)"
+                    class="btn-3d bg-blue-500 text-white font-bold py-2 px-3 rounded-lg text-xs">⌨️ Kira
+                    Langkah</button>
+                <button onclick="loadActivity(2)"
+                    class="btn-3d bg-emerald-500 text-white font-bold py-2 px-3 rounded-lg text-xs">⚙️ Mesin
+                    Aliran</button>
+                <button onclick="loadActivity(3)"
+                    class="btn-3d bg-violet-500 text-white font-bold py-2 px-3 rounded-lg text-xs">🍎 Ladang
+                    Epal</button>
+                <button onclick="loadActivity(4)"
+                    class="btn-3d bg-orange-500 text-white font-bold py-2 px-3 rounded-lg text-xs">🧩 Bina Ayat</button>
+                <button onclick="loadActivity(5)"
+                    class="btn-3d bg-rose-500 text-white font-bold py-2 px-3 rounded-lg text-xs">🧑‍🍳 Jejak
+                    Resipi</button>
+            </div>
+
+            <div class="flex justify-center gap-2 border-t-2 border-slate-100 pt-2">
+                <button onclick="clearActivity()"
+                    class="btn-3d bg-slate-400 text-white font-bold py-1 px-4 rounded-full text-xs">🏠 Menu</button>
+                <button onclick="nextActivity()"
+                    class="btn-3d bg-indigo-500 text-white font-bold py-1 px-6 rounded-full text-sm">Seterusnya
+                    ➡️</button>
             </div>
         </div>
     </div>
 
-    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 border-2 border-white">
-      <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">🎮 Pilih Aktiviti</h3>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">⌨️ Kira Langkah</button>
-        <button onclick="loadActivity(2)" class="btn-3d bg-emerald-500 text-white font-bold py-4 px-2 rounded-xl text-lg">⚙️ Mesin Aliran</button>
-        <button onclick="loadActivity(3)" class="btn-3d bg-violet-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🍎 Ladang Epal</button>
-        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🧩 Bina Ayat</button>
-        <button onclick="loadActivity(5)" class="btn-3d bg-rose-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🧑‍🍳 Jejak Resipi</button>
-      </div>
+    <script>
+        /* --- STANDARD HELPERS --- */
+        let currentActivity = 0;
+        let ttsEnabled = false;
+        let currentInfo = "Pilih aktiviti untuk mula.";
+        const r = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-      <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-6">
-        <button onclick="clearActivity()" class="btn-3d bg-slate-400 text-white font-bold py-2 px-6 rounded-full text-lg">🏠 Menu</button>
-        <button onclick="nextActivity()" class="btn-3d bg-indigo-500 text-white font-bold py-2 px-8 rounded-full text-xl">Seterusnya ➡️</button>
-      </div>
-    </div>
-  </div>
+        function triggerWin() { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
 
-  <script>
-    /* --- STANDARD HELPERS --- */
-    let currentActivity = 0;
-    let ttsEnabled = false;
-    let currentInfo = "Pilih aktiviti untuk mula.";
-    const r = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
-
-    function triggerWin() { confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 } }); }
-    
-    function speak(text) { 
-        if (!ttsEnabled || !('speechSynthesis' in window)) return; 
-        window.speechSynthesis.cancel(); 
-        const u = new SpeechSynthesisUtterance(text); 
-        u.lang = 'ms-MY'; u.rate = 0.9; u.pitch = 1.1; 
-        const voices = window.speechSynthesis.getVoices(); 
-        const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms')); 
-        if (ms) u.voice = ms; 
-        window.speechSynthesis.speak(u); 
-    }
-    
-    function setInfo(text) { 
-        currentInfo = text; 
-        const infoEl = document.getElementById('info-text'); 
-        infoEl.style.opacity = 0; 
-        setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200); 
-    }
-    
-    function speakInfo() { 
-        if (!ttsEnabled) { 
-            ttsEnabled = true; 
-            document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600'); 
-        } 
-        speak(currentInfo); 
-    }
-    
-    function pulseElement(el) {
-        if (el) {
-            el.classList.add('pulse-bounce');
-            setTimeout(() => el.classList.remove('pulse-bounce'), 500);
+        function speak(text) {
+            if (!ttsEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ms-MY'; u.rate = 0.9; u.pitch = 1.1;
+            const voices = window.speechSynthesis.getVoices();
+            const ms = voices.find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
+            if (ms) u.voice = ms;
+            window.speechSynthesis.speak(u);
         }
-    }
 
-    function shakeElement(el) {
-        if (el) {
-            el.classList.add('shake');
-            setTimeout(() => el.classList.remove('shake'), 500);
+        function setInfo(text) {
+            currentInfo = text;
+            const infoEl = document.getElementById('info-text');
+            infoEl.style.opacity = 0;
+            setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200);
         }
-    }
 
-    /* --- ROUTER --- */
-    function loadActivity(n) {
-      currentActivity = n;
-      const content = document.getElementById('activity-content');
-      content.style.opacity = 0;
-      setTimeout(() => {
-          if (n === 1) loadActivity1(content);
-          if (n === 2) loadActivity2(content);
-          if (n === 3) loadActivity3(content);
-          if (n === 4) loadActivity4(content);
-          if (n === 5) loadActivity5(content);
-          content.style.opacity = 1;
-      }, 200);
-    }
+        function speakInfo() {
+            if (!ttsEnabled) {
+                ttsEnabled = true;
+                document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600');
+            }
+            speak(currentInfo);
+        }
 
-    function clearActivity() {
-        currentActivity = 0;
-        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-bounce">🧮</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Operasi Bercampur</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
-        setInfo("Pilih aktiviti untuk mula.");
-    }
-    function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
+        function pulseElement(el) {
+            if (el) {
+                el.classList.add('pulse-bounce');
+                setTimeout(() => el.classList.remove('pulse-bounce'), 500);
+            }
+        }
 
-    /* =========================================
-       AKTIVITI 1: Kira Ikut Langkah (Input)
-       ========================================= */
-    let a1 = { num1: 0, op1: '', num2: 0, op2: '', num3: 0, midResult: 0, finalResult: 0 };
+        function shakeElement(el) {
+            if (el) {
+                el.classList.add('shake');
+                setTimeout(() => el.classList.remove('shake'), 500);
+            }
+        }
 
-    function loadActivity1(content) {
-      a1.num1 = r(20, 50);
-      a1.op1 = '÷';
-      a1.num2 = r(2, 5);
-      // Pastikan boleh bahagi
-      while (a1.num1 % a1.num2 !== 0) {
-          a1.num1 = r(20, 50); a1.num2 = r(2, 5);
-      }
-      a1.midResult = a1.num1 / a1.num2;
-      
-      a1.op2 = '×';
-      a1.num3 = r(2, 5);
-      a1.finalResult = a1.midResult * a1.num3;
-      
-      setInfo("Selesaikan langkah 1 dahulu, kemudian langkah 2.");
+        /* --- ROUTER --- */
+        function loadActivity(n) {
+            currentActivity = n;
+            const content = document.getElementById('activity-content');
+            content.style.opacity = 0;
+            setTimeout(() => {
+                if (n === 1) loadActivity1(content);
+                if (n === 2) loadActivity2(content);
+                if (n === 3) loadActivity3(content);
+                if (n === 4) loadActivity4(content);
+                if (n === 5) loadActivity5(content);
+                content.style.opacity = 1;
+            }, 200);
+        }
 
-      content.innerHTML = `
-        <h3 class="text-4xl font-bold text-blue-500 mb-6 text-center">⌨️ Kira Ikut Langkah</h3>
-        
-        <div class="flex flex-wrap items-center justify-center gap-3 mb-8 text-3xl bg-blue-50 p-4 rounded-2xl border-2 border-blue-100">
-           <span class="font-bold text-slate-700">${a1.num1}</span>
-           <span class="text-blue-500 font-bold">${a1.op1}</span>
-           <span class="font-bold text-slate-700">${a1.num2}</span>
-           <span class="text-blue-500 font-bold">${a1.op2}</span>
-           <span class="font-bold text-slate-700">${a1.num3}</span>
-           <span>=</span>
-           <span id="a1-final-answer" class="font-bold text-blue-700 border-b-4 border-blue-300 min-w-[50px] inline-block text-center">?</span>
-        </div>
-        
-        <div class="w-full max-w-lg mx-auto space-y-6">
-          <div id="a1-step1" class="bg-white border-2 border-blue-200 p-4 rounded-2xl shadow-sm">
-             <label class="block font-bold text-slate-500 mb-2 uppercase text-sm">Langkah 1</label>
-             <div class="flex items-center gap-3 text-2xl font-bold">
-                <span>${a1.num1} ${a1.op1} ${a1.num2} = </span>
-                <input id="a1-input1" type="number" onchange="checkA1Step1()" class="w-32 p-2 text-center border-2 border-slate-300 rounded-lg focus:border-blue-500 outline-none" placeholder="?">
-             </div>
-          </div>
-          
-          <div id="a1-step2" class="bg-white border-2 border-blue-200 p-4 rounded-2xl shadow-sm opacity-50 pointer-events-none transition-all">
-             <label class="block font-bold text-slate-500 mb-2 uppercase text-sm">Langkah 2</label>
-             <div class="flex items-center gap-3 text-2xl font-bold">
-                <span id="a1-mid-val" class="text-blue-600">?</span>
-                <span> ${a1.op2} ${a1.num3} = </span>
-                <input id="a1-input2" type="number" onchange="checkA1Step2()" class="w-32 p-2 text-center border-2 border-slate-300 rounded-lg focus:border-blue-500 outline-none" placeholder="?">
-             </div>
-          </div>
-        </div>
-        
-        <div id="a1-feedback" class="text-lg font-semibold text-center text-slate-500 mt-6 min-h-[30px]"></div>
-        
-        <div class="mt-8 text-center">
-           <button onclick="loadActivity(1)" class="btn-3d bg-emerald-600 text-white font-bold py-3 px-8 rounded-xl text-xl">🔄 Soalan Baharu</button>
+        function clearActivity() {
+            currentActivity = 0;
+            document.getElementById('activity-content').innerHTML = `<div class="h-full flex flex-col justify-center items-center py-4 text-center"><div class="text-6xl mb-4 animate-bounce">🧮</div><h2 class="text-3xl font-bold text-emerald-600 mb-2">Operasi Bercampur</h2><p class="text-lg text-slate-500 font-semibold">Pilih butang di bawah.</p></div>`;
+            setInfo("Pilih aktiviti untuk mula.");
+        }
+        function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
+
+        /* =========================================
+           AKTIVITI 1: Kira Ikut Langkah (Input)
+           ========================================= */
+        let a1 = { num1: 0, op1: '', num2: 0, op2: '', num3: 0, midResult: 0, finalResult: 0 };
+
+        function loadActivity1(content) {
+            a1.num1 = r(20, 50);
+            a1.op1 = '÷';
+            a1.num2 = r(2, 5);
+            // Pastikan boleh bahagi
+            while (a1.num1 % a1.num2 !== 0) {
+                a1.num1 = r(20, 50); a1.num2 = r(2, 5);
+            }
+            a1.midResult = a1.num1 / a1.num2;
+
+            a1.op2 = '×';
+            a1.num3 = r(2, 5);
+            a1.finalResult = a1.midResult * a1.num3;
+
+            setInfo("Selesaikan langkah 1 dahulu, kemudian langkah 2.");
+
+            content.innerHTML = `
+        <h3 class="text-xl font-bold text-blue-500 mb-2 text-center flex-none">⌨️ Kira Ikut Langkah</h3>
+        <div class="flex-1 overflow-hidden p-2 flex flex-col items-center justify-center">
+            
+            <div class="flex flex-wrap items-center justify-center gap-2 mb-4 text-xl bg-blue-50 p-2 rounded-xl border-2 border-blue-100">
+               <span class="font-bold text-slate-700">${a1.num1}</span>
+               <span class="text-blue-500 font-bold">${a1.op1}</span>
+               <span class="font-bold text-slate-700">${a1.num2}</span>
+               <span class="text-blue-500 font-bold">${a1.op2}</span>
+               <span class="font-bold text-slate-700">${a1.num3}</span>
+               <span>=</span>
+               <span id="a1-final-answer" class="font-bold text-blue-700 border-b-4 border-blue-300 min-w-[30px] inline-block text-center">?</span>
+            </div>
+            
+            <div class="w-full max-w-sm mx-auto space-y-4">
+              <div id="a1-step1" class="bg-white border-2 border-blue-200 p-3 rounded-xl shadow-sm">
+                 <label class="block font-bold text-slate-500 mb-1 uppercase text-xs">Langkah 1</label>
+                 <div class="flex items-center gap-2 text-lg font-bold">
+                    <span>${a1.num1} ${a1.op1} ${a1.num2} = </span>
+                    <input id="a1-input1" type="number" onchange="checkA1Step1()" class="w-24 p-1 text-center border-2 border-slate-300 rounded-lg focus:border-blue-500 outline-none" placeholder="?">
+                 </div>
+              </div>
+              
+              <div id="a1-step2" class="bg-white border-2 border-blue-200 p-3 rounded-xl shadow-sm opacity-50 pointer-events-none transition-all">
+                 <label class="block font-bold text-slate-500 mb-1 uppercase text-xs">Langkah 2</label>
+                 <div class="flex items-center gap-2 text-lg font-bold">
+                    <span id="a1-mid-val" class="text-blue-600">?</span>
+                    <span> ${a1.op2} ${a1.num3} = </span>
+                    <input id="a1-input2" type="number" onchange="checkA1Step2()" class="w-24 p-1 text-center border-2 border-slate-300 rounded-lg focus:border-blue-500 outline-none" placeholder="?">
+                 </div>
+              </div>
+            </div>
+            
+            <div id="a1-feedback" class="text-sm font-semibold text-center text-slate-500 mt-2 min-h-[20px]"></div>
+            
+            <div class="mt-4 text-center">
+               <button onclick="loadActivity(1)" class="btn-3d bg-emerald-600 text-white font-bold py-2 px-6 rounded-xl text-lg">🔄 Soalan Baharu</button>
+            </div>
         </div>
       `;
-    }
-
-    function checkA1Step1() {
-        const inputEl = document.getElementById('a1-input1');
-        const val = parseInt(inputEl.value);
-        if (val === a1.midResult) {
-            inputEl.disabled = true;
-            inputEl.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
-            
-            // Unlock step 2
-            document.getElementById('a1-mid-val').textContent = a1.midResult;
-            const step2 = document.getElementById('a1-step2');
-            step2.classList.remove('opacity-50', 'pointer-events-none');
-            setInfo("Betul! Teruskan langkah kedua.");
-            document.getElementById('a1-input2').focus();
-        } else {
-            shakeElement(inputEl);
-            setInfo("Salah. Cuba kira semula.");
         }
-    }
 
-    function checkA1Step2() {
-        const inputEl = document.getElementById('a1-input2');
-        const val = parseInt(inputEl.value);
-        if (val === a1.finalResult) {
-            inputEl.disabled = true;
-            inputEl.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
-            document.getElementById('a1-final-answer').textContent = a1.finalResult;
-            document.getElementById('a1-feedback').textContent = "Syabas! Jawapan Tepat!";
-            triggerWin(); speak(`Jawapan akhir ialah ${a1.finalResult}.`);
-        } else {
-            shakeElement(inputEl);
-            setInfo("Salah. Cuba kira semula.");
+        function checkA1Step1() {
+            const inputEl = document.getElementById('a1-input1');
+            const val = parseInt(inputEl.value);
+            if (val === a1.midResult) {
+                inputEl.disabled = true;
+                inputEl.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+
+                // Unlock step 2
+                document.getElementById('a1-mid-val').textContent = a1.midResult;
+                const step2 = document.getElementById('a1-step2');
+                step2.classList.remove('opacity-50', 'pointer-events-none');
+                setInfo("Betul! Teruskan langkah kedua.");
+                document.getElementById('a1-input2').focus();
+            } else {
+                shakeElement(inputEl);
+                setInfo("Salah. Cuba kira semula.");
+            }
         }
-    }
 
-    /* =========================================
-       AKTIVITI 2: Mesin Aliran (Klik-Mudah)
-       ========================================= */
-    let a2 = { num1:0, op1:'', num2:0, op2:'', num3:0, mid:0, final:0, curr:0, step:0 };
+        function checkA1Step2() {
+            const inputEl = document.getElementById('a1-input2');
+            const val = parseInt(inputEl.value);
+            if (val === a1.finalResult) {
+                inputEl.disabled = true;
+                inputEl.classList.add('bg-green-100', 'border-green-500', 'text-green-700');
+                document.getElementById('a1-final-answer').textContent = a1.finalResult;
+                document.getElementById('a1-feedback').textContent = "Syabas! Jawapan Tepat!";
+                triggerWin(); speak(`Jawapan akhir ialah ${a1.finalResult}.`);
+            } else {
+                shakeElement(inputEl);
+                setInfo("Salah. Cuba kira semula.");
+            }
+        }
 
-    function loadActivity2(content) {
-        a2.num1 = r(10, 30); a2.op1 = '×'; a2.num2 = r(2, 5);
-        a2.mid = a2.num1 * a2.num2;
-        a2.op2 = '÷'; a2.num3 = r(2, 5);
-        
-        // Ensure division is clean
-        while (a2.mid % a2.num3 !== 0) { a2.num3 = r(2, 5); }
-        
-        a2.final = a2.mid / a2.num3;
-        a2.curr = a2.num1;
-        a2.step = 0;
+        /* =========================================
+           AKTIVITI 2: Mesin Aliran (Klik-Mudah)
+           ========================================= */
+        let a2 = { num1: 0, op1: '', num2: 0, op2: '', num3: 0, mid: 0, final: 0, curr: 0, step: 0 };
 
-        setInfo(`Kira langkah demi langkah.`);
+        function loadActivity2(content) {
+            a2.num1 = r(10, 30); a2.op1 = '×'; a2.num2 = r(2, 5);
+            a2.mid = a2.num1 * a2.num2;
+            a2.op2 = '÷'; a2.num3 = r(2, 5);
 
-        content.innerHTML = `
-            <h3 class="text-4xl font-bold text-emerald-600 mb-6 text-center">⚙️ Mesin Aliran</h3>
-            
-            <div class="text-2xl font-bold text-center mb-4 text-slate-600 bg-slate-100 inline-block px-4 py-2 rounded-xl">
-                ${a2.num1} ${a2.op1} ${a2.num2} ${a2.op2} ${a2.num3} = ?
-            </div>
-            
-            <div class="flex justify-center">
-                <div id="a2-machine-display">${a2.num1}</div>
-            </div>
-            
-            <div id="a2-feedback" class="text-center text-xl font-bold text-slate-500 mb-6">Langkah 1: Klik operasi pertama</div>
+            // Ensure division is clean
+            while (a2.mid % a2.num3 !== 0) { a2.num3 = r(2, 5); }
 
-            <div class="flex justify-center gap-6">
-                <button id="a2-btn1" onclick="runA2Step(1)" class="btn-3d bg-green-500 text-white font-bold py-4 px-8 rounded-xl text-2xl shadow-lg">
-                    ${a2.op1} ${a2.num2}
-                </button>
-                <button id="a2-btn2" onclick="runA2Step(2)" class="btn-3d bg-slate-400 text-white font-bold py-4 px-8 rounded-xl text-2xl shadow-lg opacity-50" disabled>
-                    ${a2.op2} ${a2.num3}
-                </button>
-            </div>
-            
-            <div class="mt-8 text-center">
-                <button onclick="loadActivity(2)" class="btn-3d bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg text-lg">🔄 Mula Semula</button>
+            a2.final = a2.mid / a2.num3;
+            a2.curr = a2.num1;
+            a2.step = 0;
+
+            setInfo(`Kira langkah demi langkah.`);
+
+            content.innerHTML = `
+            <h3 class="text-xl font-bold text-emerald-600 mb-2 text-center flex-none">⚙️ Mesin Aliran</h3>
+            <div class="flex-1 overflow-hidden p-2 flex flex-col items-center justify-center">
+                
+                <div class="text-lg font-bold text-center mb-2 text-slate-600 bg-slate-100 inline-block px-4 py-2 rounded-xl">
+                    ${a2.num1} ${a2.op1} ${a2.num2} ${a2.op2} ${a2.num3} = ?
+                </div>
+                
+                <div class="flex justify-center mb-4">
+                    <div id="a2-machine-display" style="padding: 1rem; min-width: 140px; min-height: 100px; font-size: 2rem; margin: 1rem 0;">${a2.num1}</div>
+                </div>
+                
+                <div id="a2-feedback" class="text-center text-sm font-bold text-slate-500 mb-4 h-6">Langkah 1: Klik operasi pertama</div>
+
+                <div class="flex justify-center gap-4">
+                    <button id="a2-btn1" onclick="runA2Step(1)" class="btn-3d bg-green-500 text-white font-bold py-2 px-6 rounded-xl text-lg shadow-lg">
+                        ${a2.op1} ${a2.num2}
+                    </button>
+                    <button id="a2-btn2" onclick="runA2Step(2)" class="btn-3d bg-slate-400 text-white font-bold py-2 px-6 rounded-xl text-lg shadow-lg opacity-50" disabled>
+                        ${a2.op2} ${a2.num3}
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-center">
+                    <button onclick="loadActivity(2)" class="btn-3d bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg text-sm">🔄 Mula Semula</button>
+                </div>
             </div>
         `;
-    }
-
-    function runA2Step(stepNum) {
-        const machine = document.getElementById('a2-machine-display');
-        const fb = document.getElementById('a2-feedback');
-        const btn1 = document.getElementById('a2-btn1');
-        const btn2 = document.getElementById('a2-btn2');
-
-        if (stepNum === 1 && a2.step === 0) {
-            machine.textContent = a2.mid;
-            pulseElement(machine);
-            machine.classList.add('bg-emerald-800');
-            
-            fb.textContent = "Langkah 2: Klik operasi seterusnya.";
-            
-            btn1.disabled = true; btn1.classList.replace('bg-green-500', 'bg-slate-400'); btn1.classList.add('opacity-50');
-            btn2.disabled = false; btn2.classList.replace('bg-slate-400', 'bg-green-500'); btn2.classList.remove('opacity-50');
-            
-            a2.step = 1;
-            setInfo(`Hasil: ${a2.mid}. Seterusnya bahagi.`);
-        } else if (stepNum === 2 && a2.step === 1) {
-            machine.textContent = a2.final;
-            pulseElement(machine);
-            machine.classList.replace('bg-emerald-800', 'bg-green-600');
-            
-            fb.textContent = `Selesai! Jawapan: ${a2.final}`;
-            btn2.disabled = true; btn2.classList.replace('bg-green-500', 'bg-slate-400'); btn2.classList.add('opacity-50');
-            
-            triggerWin(); speak(`Jawapan akhir ialah ${a2.final}.`);
         }
-    }
 
-    /* =========================================
-       AKTIVITI 3: Ladang Kumpulan (Visual)
-       ========================================= */
-    let a3 = { n1:0, n2:0, n3:0, mid:0, fin:0, step:0 };
+        function runA2Step(stepNum) {
+            const machine = document.getElementById('a2-machine-display');
+            const fb = document.getElementById('a2-feedback');
+            const btn1 = document.getElementById('a2-btn1');
+            const btn2 = document.getElementById('a2-btn2');
 
-    function loadActivity3(content) {
-        a3.n1 = r(2, 4); // Jumlah bakul
-        a3.n2 = r(2, 4); // Epal per bakul
-        a3.mid = a3.n1 * a3.n2; // Total epal
-        a3.n3 = r(2, Math.floor(a3.mid/2));
-        
-        // Ensure valid clean division
-        while (a3.mid % a3.n3 !== 0 || a3.mid / a3.n3 < 2) {
-             a3.n3 = r(2, Math.floor(a3.mid/2));
-             if(a3.n3 < 2) { a3.n3 = 2; if(a3.mid % 2 !== 0) a3.mid++; }
+            if (stepNum === 1 && a2.step === 0) {
+                machine.textContent = a2.mid;
+                pulseElement(machine);
+                machine.classList.add('bg-emerald-800');
+
+                fb.textContent = "Langkah 2: Klik operasi seterusnya.";
+
+                btn1.disabled = true; btn1.classList.replace('bg-green-500', 'bg-slate-400'); btn1.classList.add('opacity-50');
+                btn2.disabled = false; btn2.classList.replace('bg-slate-400', 'bg-green-500'); btn2.classList.remove('opacity-50');
+
+                a2.step = 1;
+                setInfo(`Hasil: ${a2.mid}. Seterusnya bahagi.`);
+            } else if (stepNum === 2 && a2.step === 1) {
+                machine.textContent = a2.final;
+                pulseElement(machine);
+                machine.classList.replace('bg-emerald-800', 'bg-green-600');
+
+                fb.textContent = `Selesai! Jawapan: ${a2.final}`;
+                btn2.disabled = true; btn2.classList.replace('bg-green-500', 'bg-slate-400'); btn2.classList.add('opacity-50');
+
+                triggerWin(); speak(`Jawapan akhir ialah ${a2.final}.`);
+            }
         }
-        a3.fin = a3.mid / a3.n3;
-        a3.step = 0;
 
-        setInfo(`${a3.n1} bakul × ${a3.n2} epal. Kemudian bahagi kepada ${a3.n3} orang.`);
+        /* =========================================
+           AKTIVITI 3: Ladang Kumpulan (Visual)
+           ========================================= */
+        let a3 = { n1: 0, n2: 0, n3: 0, mid: 0, fin: 0, step: 0 };
 
-        content.innerHTML = `
-            <h3 class="text-4xl font-bold text-violet-600 mb-6 text-center">🍎 Ladang Epal</h3>
-            <div class="text-xl font-bold text-slate-500 mb-4">
-                ${a3.n1} × ${a3.n2} ÷ ${a3.n3} = <span id="a3-res" class="text-violet-600">?</span>
-            </div>
+        function loadActivity3(content) {
+            a3.n1 = r(2, 4); // Jumlah bakul
+            a3.n2 = r(2, 4); // Epal per bakul
+            a3.mid = a3.n1 * a3.n2; // Total epal
+            a3.n3 = r(2, Math.floor(a3.mid / 2));
 
-            <div id="a3-stage1" class="flex flex-wrap justify-center gap-2 min-h-[120px]">
-                ${Array(a3.n1).fill('<div class="basket"></div>').join('')}
-            </div>
-            
-            <div id="a3-stage2" class="hidden flex flex-wrap justify-center gap-4 mt-6"></div>
+            // Ensure valid clean division
+            while (a3.mid % a3.n3 !== 0 || a3.mid / a3.n3 < 2) {
+                a3.n3 = r(2, Math.floor(a3.mid / 2));
+                if (a3.n3 < 2) { a3.n3 = 2; if (a3.mid % 2 !== 0) a3.mid++; }
+            }
+            a3.fin = a3.mid / a3.n3;
+            a3.step = 0;
 
-            <div id="a3-counter" class="text-2xl font-bold mt-4 text-violet-800">Epal: 0</div>
+            setInfo(`${a3.n1} bakul × ${a3.n2} epal. Kemudian bahagi kepada ${a3.n3} orang.`);
 
-            <div class="mt-8 text-center">
-                <button id="a3-btn" onclick="runA3()" class="btn-3d bg-violet-500 text-white font-bold py-3 px-8 rounded-xl text-xl">Kira Epal (Darab) ➡️</button>
+            content.innerHTML = `
+            <h3 class="text-xl font-bold text-violet-600 mb-2 text-center flex-none">🍎 Ladang Epal</h3>
+            <div class="flex-1 overflow-hidden p-2 flex flex-col items-center justify-center">
+
+                <div class="text-lg font-bold text-slate-500 mb-2">
+                    ${a3.n1} × ${a3.n2} ÷ ${a3.n3} = <span id="a3-res" class="text-violet-600">?</span>
+                </div>
+
+                <div id="a3-stage1" class="flex flex-wrap justify-center gap-2 min-h-[100px] scale-90 origin-center">
+                    ${Array(a3.n1).fill('<div class="basket" style="width:70px; height:70px;"></div>').join('')}
+                </div>
+                
+                <div id="a3-stage2" class="hidden flex flex-wrap justify-center gap-2 mt-4 scale-90 origin-center"></div>
+
+                <div id="a3-counter" class="text-xl font-bold mt-2 text-violet-800">Epal: 0</div>
+
+                <div class="mt-4 text-center">
+                    <button id="a3-btn" onclick="runA3()" class="btn-3d bg-violet-500 text-white font-bold py-2 px-6 rounded-xl text-lg">Kira Epal (Darab) ➡️</button>
+                </div>
             </div>
         `;
-    }
+        }
 
-    function runA3() {
-        const btn = document.getElementById('a3-btn');
-        const counter = document.getElementById('a3-counter');
+        function runA3() {
+            const btn = document.getElementById('a3-btn');
+            const counter = document.getElementById('a3-counter');
 
-        if (a3.step === 0) {
-            // Animation: Fill Baskets
-            btn.disabled = true;
-            const baskets = document.querySelectorAll('.basket');
-            let totalApples = 0;
-            let bIdx = 0;
-            
-            const fillInterval = setInterval(() => {
-                if (bIdx < a3.n1) {
-                    if (baskets[bIdx].children.length < a3.n2) {
+            if (a3.step === 0) {
+                // Animation: Fill Baskets
+                btn.disabled = true;
+                const baskets = document.querySelectorAll('.basket');
+                let totalApples = 0;
+                let bIdx = 0;
+
+                const fillInterval = setInterval(() => {
+                    if (bIdx < a3.n1) {
+                        if (baskets[bIdx].children.length < a3.n2) {
+                            const apple = document.createElement('span');
+                            apple.className = 'apple'; apple.textContent = '🍎';
+                            baskets[bIdx].appendChild(apple);
+                            totalApples++;
+                            counter.textContent = `Epal: ${totalApples}`;
+                        } else {
+                            bIdx++;
+                        }
+                    } else {
+                        clearInterval(fillInterval);
+                        setInfo(`Ada ${totalApples} epal. Sekarang bahagi kepada ${a3.n3} kumpulan.`);
+                        btn.textContent = `Bahagi ${a3.n3} Kumpulan ➡️`;
+                        btn.disabled = false;
+                        a3.step = 1;
+                    }
+                }, 150);
+
+            } else if (a3.step === 1) {
+                // Animation: Distribute to Groups
+                btn.disabled = true;
+                document.getElementById('a3-stage1').classList.add('hidden');
+                const stage2 = document.getElementById('a3-stage2');
+                stage2.classList.remove('hidden');
+
+                // Create group boxes
+                stage2.innerHTML = Array(a3.n3).fill('<div class="group-box"></div>').join('');
+                const groups = document.querySelectorAll('.group-box');
+
+                let distributed = 0;
+                let gIdx = 0;
+
+                const distInterval = setInterval(() => {
+                    if (distributed < a3.mid) {
                         const apple = document.createElement('span');
                         apple.className = 'apple'; apple.textContent = '🍎';
-                        baskets[bIdx].appendChild(apple);
-                        totalApples++;
-                        counter.textContent = `Epal: ${totalApples}`;
+                        groups[gIdx].appendChild(apple);
+                        distributed++;
+                        gIdx = (gIdx + 1) % a3.n3;
                     } else {
-                        bIdx++;
+                        clearInterval(distInterval);
+                        counter.textContent = `Setiap kumpulan ada ${a3.fin} epal.`;
+                        document.getElementById('a3-res').textContent = a3.fin;
+                        btn.textContent = "Selesai!";
+                        triggerWin(); speak(`Setiap kumpulan dapat ${a3.fin} biji epal.`);
                     }
-                } else {
-                    clearInterval(fillInterval);
-                    setInfo(`Ada ${totalApples} epal. Sekarang bahagi kepada ${a3.n3} kumpulan.`);
-                    btn.textContent = `Bahagi ${a3.n3} Kumpulan ➡️`;
-                    btn.disabled = false;
-                    a3.step = 1;
-                }
-            }, 150);
-
-        } else if (a3.step === 1) {
-            // Animation: Distribute to Groups
-            btn.disabled = true;
-            document.getElementById('a3-stage1').classList.add('hidden');
-            const stage2 = document.getElementById('a3-stage2');
-            stage2.classList.remove('hidden');
-            
-            // Create group boxes
-            stage2.innerHTML = Array(a3.n3).fill('<div class="group-box"></div>').join('');
-            const groups = document.querySelectorAll('.group-box');
-            
-            let distributed = 0;
-            let gIdx = 0;
-            
-            const distInterval = setInterval(() => {
-                if (distributed < a3.mid) {
-                    const apple = document.createElement('span');
-                    apple.className = 'apple'; apple.textContent = '🍎';
-                    groups[gIdx].appendChild(apple);
-                    distributed++;
-                    gIdx = (gIdx + 1) % a3.n3;
-                } else {
-                    clearInterval(distInterval);
-                    counter.textContent = `Setiap kumpulan ada ${a3.fin} epal.`;
-                    document.getElementById('a3-res').textContent = a3.fin;
-                    btn.textContent = "Selesai!";
-                    triggerWin(); speak(`Setiap kumpulan dapat ${a3.fin} biji epal.`);
-                }
-            }, 100);
+                }, 100);
+            }
         }
-    }
 
-    /* =========================================
-       AKTIVITI 4: Bina Ayat (Builder)
-       ========================================= */
-    let a4 = { slots: ['', '', '', '', ''] };
+        /* =========================================
+           AKTIVITI 4: Bina Ayat (Builder)
+           ========================================= */
+        let a4 = { slots: ['', '', '', '', ''] };
 
-    function loadActivity4(content) {
-        a4.slots = ['', '', '', '', ''];
-        setInfo("Bina ayat matematik. Selang-selikan Nombor dan Operasi.");
+        function loadActivity4(content) {
+            a4.slots = ['', '', '', '', ''];
+            setInfo("Bina ayat matematik. Selang-selikan Nombor dan Operasi.");
 
-        content.innerHTML = `
-            <h3 class="text-4xl font-bold text-orange-500 mb-6 text-center">🧩 Bina Ayat Matematik</h3>
-            
-            <div id="a4-slots" class="flex flex-wrap justify-center items-center gap-2 mb-8">
-                ${a4.slots.map((_,i) => `<div id="slot-${i}" class="eq-builder-slot"></div>`).join('')}
-                <span class="text-3xl font-bold">=</span>
-                <div id="a4-res" class="eq-builder-slot border-orange-400 bg-orange-50 text-orange-600">?</div>
-            </div>
+            content.innerHTML = `
+            <h3 class="text-xl font-bold text-orange-500 mb-2 text-center flex-none">🧩 Bina Ayat Matematik</h3>
+            <div class="flex-1 overflow-hidden p-2 flex flex-col items-center justify-center">
+                
+                <div id="a4-slots" class="flex flex-wrap justify-center items-center gap-2 mb-4 scale-90 origin-center">
+                    ${a4.slots.map((_, i) => `<div id="slot-${i}" class="eq-builder-slot" style="width:50px; height:50px; font-size:1.4rem;"></div>`).join('')}
+                    <span class="text-2xl font-bold">=</span>
+                    <div id="a4-res" class="eq-builder-slot border-orange-400 bg-orange-50 text-orange-600" style="width:50px; height:50px; font-size:1.4rem;">?</div>
+                </div>
 
-            <div class="grid grid-cols-2 gap-8 max-w-2xl mx-auto">
-                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
-                    <h4 class="font-bold text-slate-500 mb-2 text-center">NOMBOR</h4>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        ${[20, 10, 5, 4, 2, 30].map(n => `<button onclick="addSlot('${n}')" class="eq-btn hover:bg-orange-100">${n}</button>`).join('')}
+                <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto w-full">
+                    <div class="bg-slate-50 p-2 rounded-xl border-2 border-slate-200">
+                        <h4 class="font-bold text-slate-500 mb-2 text-center text-xs">NOMBOR</h4>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            ${[20, 10, 5, 4, 2, 30].map(n => `<button onclick="addSlot('${n}')" class="eq-btn hover:bg-orange-100 text-sm py-1 px-2">${n}</button>`).join('')}
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-xl border-2 border-slate-200">
+                        <h4 class="font-bold text-slate-500 mb-2 text-center text-xs">OPERASI</h4>
+                        <div class="flex flex-wrap justify-center gap-2">
+                            <button onclick="addSlot('×')" class="eq-btn text-blue-500 hover:bg-blue-50 text-sm py-1 px-2">×</button>
+                            <button onclick="addSlot('÷')" class="eq-btn text-rose-500 hover:bg-rose-50 text-sm py-1 px-2">÷</button>
+                        </div>
                     </div>
                 </div>
-                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
-                    <h4 class="font-bold text-slate-500 mb-2 text-center">OPERASI</h4>
-                    <div class="flex flex-wrap justify-center gap-2">
-                        <button onclick="addSlot('×')" class="eq-btn text-blue-500 hover:bg-blue-50">×</button>
-                        <button onclick="addSlot('÷')" class="eq-btn text-rose-500 hover:bg-rose-50">÷</button>
-                    </div>
+
+                <div class="mt-4 flex justify-center gap-2">
+                    <button id="a4-calc" onclick="calcA4()" class="btn-3d bg-orange-500 text-white font-bold py-2 px-6 rounded-xl text-lg opacity-50" disabled>Kira!</button>
+                    <button onclick="loadActivity(4)" class="btn-3d bg-slate-400 text-white font-bold py-2 px-4 rounded-xl text-lg">Padam</button>
                 </div>
-            </div>
-
-            <div class="mt-8 flex justify-center gap-4">
-                <button id="a4-calc" onclick="calcA4()" class="btn-3d bg-orange-500 text-white font-bold py-3 px-8 rounded-xl text-xl opacity-50" disabled>Kira!</button>
-                <button onclick="loadActivity(4)" class="btn-3d bg-slate-400 text-white font-bold py-3 px-6 rounded-xl text-xl">Padam</button>
-            </div>
-            
-            <div id="a4-fb" class="text-center font-bold text-xl text-slate-500 mt-4 h-8"></div>
-        `;
-    }
-
-    function addSlot(val) {
-        const idx = a4.slots.indexOf('');
-        if (idx === -1) return;
-
-        // Logic check: Odd index must be Op, Even must be Num
-        const isNum = !isNaN(val);
-        const isOpSlot = (idx % 2 !== 0); // 1, 3
-
-        if (isNum && isOpSlot) { shakeElement(document.getElementById(`slot-${idx-1}`)); return; }
-        if (!isNum && !isOpSlot) { shakeElement(document.getElementById(`slot-${idx}`)); return; }
-
-        a4.slots[idx] = val;
-        document.getElementById(`slot-${idx}`).textContent = val;
-
-        if (a4.slots.indexOf('') === -1) {
-            document.getElementById('a4-calc').disabled = false;
-            document.getElementById('a4-calc').classList.remove('opacity-50');
-        }
-    }
-
-    function calcA4() {
-        const [n1, op1, n2, op2, n3] = a4.slots;
-        const fb = document.getElementById('a4-fb');
-        
-        try {
-            // Calculate left to right for primary school level usually, 
-            // but here we follow std math or left-to-right depending on curriculum.
-            // Let's do pure JS eval (BODMAS) but simplified for children display.
-            
-            const expr1 = `${n1} ${op1.replace('×','*').replace('÷','/')} ${n2}`;
-            let res1 = eval(expr1);
-            if (!isFinite(res1)) throw "Error";
-            
-            const expr2 = `${res1} ${op2.replace('×','*').replace('÷','/')} ${n3}`;
-            let res2 = eval(expr2);
-            if (!isFinite(res2)) throw "Error";
-            
-            // Rounding
-            res2 = Math.round(res2 * 100) / 100;
-
-            document.getElementById('a4-res').textContent = res2;
-            pulseElement(document.getElementById('a4-res'));
-            fb.innerHTML = `<span class="text-green-600">Dapat! ${n1} ${op1} ${n2} = ${res1}, kemudian ${op2} ${n3} = ${res2}</span>`;
-            triggerWin();
-
-        } catch (e) {
-            fb.innerHTML = `<span class="text-rose-500">Ayat tidak sah (Bahagi 0 atau nombor terlalu besar)</span>`;
-            shakeElement(document.getElementById('a4-slots'));
-        }
-    }
-
-    /* =========================================
-       AKTIVITI 5: Jejak Resipi (Recipe)
-       ========================================= */
-    let a5 = { n1:0, op1:'', n2:0, op2:'', n3:0, mid:0, fin:0, step:0 };
-
-    function loadActivity5(content) {
-        a5.n1 = r(10, 20); a5.op1 = '×'; a5.n2 = r(2, 5);
-        let mid = a5.n1 * a5.n2;
-        a5.op2 = '÷'; a5.n3 = r(2, 5);
-        while (mid % a5.n3 !== 0) { mid++; } // Fix math
-        // Reverse calculate starting n1 if needed or just adjust
-        // Simpler:
-        a5.mid = mid;
-        a5.n1 = mid / a5.n2; // Adjust start to fit math
-        
-        a5.fin = mid / a5.n3;
-        a5.step = 0;
-
-        setInfo("Ikut langkah resipi satu persatu.");
-
-        content.innerHTML = `
-            <h3 class="text-4xl font-bold text-rose-500 mb-6 text-center">🧑‍🍳 Jejak Resipi</h3>
-            
-            <div class="flex flex-col md:flex-row gap-8 items-start justify-center">
-                <div class="w-full md:w-1/3 bg-white border-4 border-rose-200 rounded-2xl p-4">
-                    <h4 class="text-xl font-bold text-rose-800 mb-4 text-center">📖 Buku Resipi</h4>
-                    <div id="step-1" class="recipe-step active">1. Mula: ${a5.n1}</div>
-                    <div id="step-2" class="recipe-step">2. Masukkan: ${a5.op1} ${a5.n2}</div>
-                    <div id="step-3" class="recipe-step">3. Akhir: ${a5.op2} ${a5.n3}</div>
-                </div>
-
-                <div class="w-full md:w-1/3 flex flex-col items-center">
-                    <div id="bowl" class="bowl-display">${a5.n1}</div>
-                    
-                    <div id="a5-choices" class="flex gap-4 mt-6">
-                        <button onclick="chooseA5(1)" class="btn-3d bg-rose-500 text-white font-bold py-3 px-6 rounded-xl text-lg">${a5.op1} ${a5.n2}</button>
-                        <button onclick="chooseA5(2)" class="btn-3d bg-rose-500 text-white font-bold py-3 px-6 rounded-xl text-lg opacity-50" disabled>${a5.op2} ${a5.n3}</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="a5-fb" class="text-center font-bold text-xl text-slate-500 mt-6 h-8">Klik butang pertama...</div>
-
-            <div class="text-center mt-6">
-                 <button onclick="loadActivity(5)" class="btn-3d bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg">🔄 Masak Lagi</button>
+                
+                <div id="a4-fb" class="text-center font-bold text-sm text-slate-500 mt-2 h-6"></div>
             </div>
         `;
-    }
-
-    function chooseA5(choice) {
-        const bowl = document.getElementById('bowl');
-        const fb = document.getElementById('a5-fb');
-        const btns = document.querySelectorAll('#a5-choices button');
-
-        if (choice === 1 && a5.step === 0) {
-            bowl.textContent = a5.mid;
-            pulseElement(bowl);
-            document.getElementById('step-1').classList.replace('active', 'done');
-            document.getElementById('step-2').classList.add('active');
-            
-            btns[0].disabled = true; btns[0].classList.add('opacity-50');
-            btns[1].disabled = false; btns[1].classList.remove('opacity-50');
-            
-            fb.textContent = "Bagus! Sekarang langkah seterusnya.";
-            a5.step = 1;
-        } else if (choice === 2 && a5.step === 1) {
-            bowl.textContent = a5.fin;
-            pulseElement(bowl);
-            document.getElementById('step-2').classList.replace('active', 'done');
-            document.getElementById('step-3').classList.add('active', 'done'); // All done
-            
-            btns[1].disabled = true; btns[1].classList.add('opacity-50');
-            
-            fb.textContent = `Siap! Hasil: ${a5.fin}`;
-            triggerWin(); speak("Resipi siap!");
         }
-    }
 
-    // Init TTS keepalive
-    if ('speechSynthesis' in window) setInterval(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 1000);
+        function addSlot(val) {
+            const idx = a4.slots.indexOf('');
+            if (idx === -1) return;
 
-  </script>
+            // Logic check: Odd index must be Op, Even must be Num
+            const isNum = !isNaN(val);
+            const isOpSlot = (idx % 2 !== 0); // 1, 3
+
+            if (isNum && isOpSlot) { shakeElement(document.getElementById(`slot-${idx - 1}`)); return; }
+            if (!isNum && !isOpSlot) { shakeElement(document.getElementById(`slot-${idx}`)); return; }
+
+            a4.slots[idx] = val;
+            document.getElementById(`slot-${idx}`).textContent = val;
+
+            if (a4.slots.indexOf('') === -1) {
+                document.getElementById('a4-calc').disabled = false;
+                document.getElementById('a4-calc').classList.remove('opacity-50');
+            }
+        }
+
+        function calcA4() {
+            const [n1, op1, n2, op2, n3] = a4.slots;
+            const fb = document.getElementById('a4-fb');
+
+            try {
+                // Calculate left to right for primary school level usually, 
+                // but here we follow std math or left-to-right depending on curriculum.
+                // Let's do pure JS eval (BODMAS) but simplified for children display.
+
+                const expr1 = `${n1} ${op1.replace('×', '*').replace('÷', '/')} ${n2}`;
+                let res1 = eval(expr1);
+                if (!isFinite(res1)) throw "Error";
+
+                const expr2 = `${res1} ${op2.replace('×', '*').replace('÷', '/')} ${n3}`;
+                let res2 = eval(expr2);
+                if (!isFinite(res2)) throw "Error";
+
+                // Rounding
+                res2 = Math.round(res2 * 100) / 100;
+
+                document.getElementById('a4-res').textContent = res2;
+                pulseElement(document.getElementById('a4-res'));
+                fb.innerHTML = `<span class="text-green-600">Dapat! ${n1} ${op1} ${n2} = ${res1}, kemudian ${op2} ${n3} = ${res2}</span>`;
+                triggerWin();
+
+            } catch (e) {
+                fb.innerHTML = `<span class="text-rose-500">Ayat tidak sah (Bahagi 0 atau nombor terlalu besar)</span>`;
+                shakeElement(document.getElementById('a4-slots'));
+            }
+        }
+
+        /* =========================================
+           AKTIVITI 5: Jejak Resipi (Recipe)
+           ========================================= */
+        let a5 = { n1: 0, op1: '', n2: 0, op2: '', n3: 0, mid: 0, fin: 0, step: 0 };
+
+        function loadActivity5(content) {
+            a5.n1 = r(10, 20); a5.op1 = '×'; a5.n2 = r(2, 5);
+            let mid = a5.n1 * a5.n2;
+            a5.op2 = '÷'; a5.n3 = r(2, 5);
+            while (mid % a5.n3 !== 0) { mid++; } // Fix math
+            // Reverse calculate starting n1 if needed or just adjust
+            // Simpler:
+            a5.mid = mid;
+            a5.n1 = mid / a5.n2; // Adjust start to fit math
+
+            a5.fin = mid / a5.n3;
+            a5.step = 0;
+
+            setInfo("Ikut langkah resipi satu persatu.");
+
+            content.innerHTML = `
+            <h3 class="text-xl font-bold text-rose-500 mb-2 text-center flex-none">🧑‍🍳 Jejak Resipi</h3>
+            <div class="flex-1 overflow-hidden p-2 flex flex-col items-center justify-center">
+                
+                <div class="flex flex-col md:flex-row gap-4 items-start justify-center w-full max-w-2xl">
+                    <div class="w-full md:w-1/2 bg-white border-4 border-rose-200 rounded-xl p-2 text-sm">
+                        <h4 class="text-lg font-bold text-rose-800 mb-2 text-center">📖 Buku Resipi</h4>
+                        <div id="step-1" class="recipe-step active p-1 mb-1">1. Mula: ${a5.n1}</div>
+                        <div id="step-2" class="recipe-step p-1 mb-1">2. Masukkan: ${a5.op1} ${a5.n2}</div>
+                        <div id="step-3" class="recipe-step p-1 mb-1">3. Akhir: ${a5.op2} ${a5.n3}</div>
+                    </div>
+
+                    <div class="w-full md:w-1/2 flex flex-col items-center">
+                        <div id="bowl" class="bowl-display" style="width:120px; height:120px; font-size:2rem;">${a5.n1}</div>
+                        
+                        <div id="a5-choices" class="flex gap-2 mt-4">
+                            <button onclick="chooseA5(1)" class="btn-3d bg-rose-500 text-white font-bold py-2 px-4 rounded-xl text-sm">${a5.op1} ${a5.n2}</button>
+                            <button onclick="chooseA5(2)" class="btn-3d bg-rose-500 text-white font-bold py-2 px-4 rounded-xl text-sm opacity-50" disabled>${a5.op2} ${a5.n3}</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="a5-fb" class="text-center font-bold text-sm text-slate-500 mt-2 h-6">Klik butang pertama...</div>
+
+                <div class="text-center mt-2">
+                     <button onclick="loadActivity(5)" class="btn-3d bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg text-sm">🔄 Masak Lagi</button>
+                </div>
+            </div>
+        `;
+        }
+
+        function chooseA5(choice) {
+            const bowl = document.getElementById('bowl');
+            const fb = document.getElementById('a5-fb');
+            const btns = document.querySelectorAll('#a5-choices button');
+
+            if (choice === 1 && a5.step === 0) {
+                bowl.textContent = a5.mid;
+                pulseElement(bowl);
+                document.getElementById('step-1').classList.replace('active', 'done');
+                document.getElementById('step-2').classList.add('active');
+
+                btns[0].disabled = true; btns[0].classList.add('opacity-50');
+                btns[1].disabled = false; btns[1].classList.remove('opacity-50');
+
+                fb.textContent = "Bagus! Sekarang langkah seterusnya.";
+                a5.step = 1;
+            } else if (choice === 2 && a5.step === 1) {
+                bowl.textContent = a5.fin;
+                pulseElement(bowl);
+                document.getElementById('step-2').classList.replace('active', 'done');
+                document.getElementById('step-3').classList.add('active', 'done'); // All done
+
+                btns[1].disabled = true; btns[1].classList.add('opacity-50');
+
+                fb.textContent = `Siap! Hasil: ${a5.fin}`;
+                triggerWin(); speak("Resipi siap!");
+            }
+        }
+
+        // Init TTS keepalive
+        if ('speechSynthesis' in window) setInterval(() => { if (window.speechSynthesis.paused) window.speechSynthesis.resume(); }, 1000);
+
+    </script>
 </body>
+
 </html>
